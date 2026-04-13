@@ -1,0 +1,30 @@
+{
+  "name": "cyberpay-payroll",
+  "version": "1.0.0",
+  "description": "CyberPay Payroll - Confidential payroll and treasury stipend demo powered by Zama FHE.",
+  "main": "index.js",
+  "scripts": {
+    "node": "hardhat node",
+    "compile": "hardhat compile",
+    "deploy:mock": "hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "seed:local": "hardhat run scripts/seedDemo.ts --network localhost",
+    "test": "hardhat test",
+    "frontend:serve": "python3 -m http.server 4173 --directory frontend"
+  },
+  "keywords": [],
+  "author": "CyberPay",
+  "license": "ISC",
+  "dependencies": {
+    "@fhevm/hardhat-plugin": "^0.4.2",
+    "@fhevm/solidity": "^0.11.1",
+    "@openzeppelin/contracts": "^5.6.1",
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.28.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

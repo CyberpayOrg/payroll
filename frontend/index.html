@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CyberPay Payroll Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="top-nav">
+        <div class="brand">CyberPay</div>
+        <div class="nav-links">
+          <button class="nav-link" data-target="heroSection">Pipeline</button>
+          <button class="nav-link" data-target="workflowSection">Workflow</button>
+          <button class="nav-link" data-target="architectureSection">Architecture</button>
+          <button class="nav-link" data-target="deploymentSection">Deployment</button>
+        </div>
+        <div class="nav-actions">
+          <button id="langToggle" class="nav-meta">EN</button>
+          <button id="docsButton" class="nav-doc">Docs</button>
+        </div>
+      </nav>
+
+      <section id="heroSection" class="hero">
+        <div class="hero-main center">
+          <p class="eyebrow" data-i18n="eyebrow">CyberPay AI-powered payroll engine | v2.0</p>
+          <h1 data-i18n="heroTitle">Confidential payroll automation engine</h1>
+          <p class="subtitle" data-i18n="heroSubtitle">
+            From encrypted stipend setup and batch cycle execution to treasury
+            aggregation and private claims, deliver a complete FHE-ready payroll
+            workflow.
+          </p>
+          <div class="hero-actions center">
+            <button id="connectButton" data-i18n="connectWallet">Connect Wallet</button>
+            <button id="viewGithubButton" class="ghost" data-i18n="viewGithub">View GitHub</button>
+          </div>
+          <p id="walletStatus" class="status-line">Wallet: not connected</p>
+        </div>
+      </section>
+
+      <div class="layout-grid">
+        <section id="architectureSection" class="left-column">
+          <section class="card" id="contractSection">
+            <h2>Contract Session</h2>
+            <label>
+              Contract Address
+              <input id="contractAddress" placeholder="0x..." />
+            </label>
+            <button id="loadContractButton">Load Contract</button>
+            <p id="contractStatus" class="status-line">Contract: not loaded</p>
+            <p id="cycleStatus" class="status-line">Current cycle: -</p>
+          </section>
+
+          <section class="card" id="treasurySection">
+            <h2>Treasury Dashboard</h2>
+            <button id="refreshDashboardButton">Refresh dashboard</button>
+            <p id="treasuryStatus" class="status-line">Treasury: -</p>
+            <pre id="employeeBoard"></pre>
+          </section>
+
+          <section class="card" id="deploymentSection">
+            <h2>Activity Log</h2>
+            <pre id="logBox"></pre>
+          </section>
+        </section>
+
+        <section id="workflowSection" class="right-column">
+          <section class="card">
+            <h2>Admin Console</h2>
+            <label>
+              Employee address
+              <input id="employeeAddressInput" placeholder="0x..." />
+            </label>
+            <label>
+              Monthly stipend (demo mode plain number)
+              <input
+                id="employeeStipendInput"
+                type="number"
+                min="0"
+                placeholder="1000"
+              />
+            </label>
+            <button id="configureEmployeeButton">Configure employee</button>
+
+            <div class="divider"></div>
+
+            <label>
+              Worker addresses (comma separated)
+              <textarea
+                id="workersInput"
+                rows="3"
+                placeholder="0xabc...,0xdef..."
+              ></textarea>
+            </label>
+            <button id="runPayrollButton">Run payroll cycle</button>
+          </section>
+
+          <section class="card">
+            <h2>Employee Claim</h2>
+            <label>
+              Demo claim amount
+              <input
+                id="claimAmountInput"
+                type="number"
+                min="0"
+                placeholder="100"
+              />
+            </label>
+            <button id="claimPlainButton">Claim (demo plain)</button>
+
+            <p class="hint">Production mode (FHE encrypted input)</p>
+            <label>
+              claimAmount handle (bytes32-like string)
+              <input id="claimHandleInput" placeholder="0x..." />
+            </label>
+            <label>
+              input proof (bytes)
+              <input id="claimProofInput" placeholder="0x..." />
+            </label>
+            <button id="claimEncryptedButton">Claim (encrypted)</button>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

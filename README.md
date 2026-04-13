@@ -1,5 +1,9 @@
 # CyberPay Payroll
 
+[![CI](https://github.com/CyberpayOrg/payroll/actions/workflows/ci.yml/badge.svg)](https://github.com/CyberpayOrg/payroll/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/CyberpayOrg/payroll)](https://github.com/CyberpayOrg/payroll/releases)
+
 CyberPay Payroll is a confidential payroll and treasury stipend demo tailored for the **OpenBuild x Zama bounty**.
 
 It focuses on a practical and compliance-friendly scenario:

@@ -3,127 +3,150 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CyberPay Payroll Demo</title>
+    <title>Nomad Pay Payout</title>
+    <link rel="icon" href="https://nomadpay.io/logo.svg" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
   </head>
   <body>
-    <main class="app-shell">
-      <nav class="top-nav">
-        <div class="brand">CyberPay</div>
-        <div class="nav-links">
-          <button class="nav-link" data-target="heroSection">Pipeline</button>
-          <button class="nav-link" data-target="workflowSection">Workflow</button>
-          <button class="nav-link" data-target="architectureSection">Architecture</button>
-          <button class="nav-link" data-target="deploymentSection">Deployment</button>
-        </div>
-        <div class="nav-actions">
-          <button id="langToggle" class="nav-meta">EN</button>
-          <button id="docsButton" class="nav-doc">Docs</button>
-        </div>
-      </nav>
-
-      <section id="heroSection" class="hero">
-        <div class="hero-main center">
-          <p class="eyebrow" data-i18n="eyebrow">CyberPay AI-powered payroll engine | v2.0</p>
-          <h1 data-i18n="heroTitle">Confidential payroll automation engine</h1>
-          <p class="subtitle" data-i18n="heroSubtitle">
-            From encrypted stipend setup and batch cycle execution to treasury
-            aggregation and private claims, deliver a complete FHE-ready payroll
-            workflow.
-          </p>
-          <div class="hero-actions center">
-            <button id="connectButton" data-i18n="connectWallet">Connect Wallet</button>
-            <button id="viewGithubButton" class="ghost" data-i18n="viewGithub">View GitHub</button>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+    <div id="app" class="page">
+      <header class="header">
+        <div class="brand">
+          <img src="https://nomadpay.io/logo.svg" alt="Nomad Pay Payout" class="brand-icon" width="28" height="28" />
+          <div>
+            <p class="brand-title">Nomad Pay Payout</p>
+            <p class="brand-sub">Batch Transfer Console</p>
           </div>
-          <p id="walletStatus" class="status-line">Wallet: not connected</p>
         </div>
-      </section>
+        <div class="header-right">
+          <span id="walletState" class="wallet-state">Not Connected</span>
+        </div>
+      </header>
 
-      <div class="layout-grid">
-        <section id="architectureSection" class="left-column">
-          <section class="card" id="contractSection">
-            <h2>Contract Session</h2>
-            <label>
-              Contract Address
-              <input id="contractAddress" placeholder="0x..." />
-            </label>
-            <button id="loadContractButton">Load Contract</button>
-            <p id="contractStatus" class="status-line">Contract: not loaded</p>
-            <p id="cycleStatus" class="status-line">Current cycle: -</p>
-          </section>
-
-          <section class="card" id="treasurySection">
-            <h2>Treasury Dashboard</h2>
-            <button id="refreshDashboardButton">Refresh dashboard</button>
-            <p id="treasuryStatus" class="status-line">Treasury: -</p>
-            <pre id="employeeBoard"></pre>
-          </section>
-
-          <section class="card" id="deploymentSection">
-            <h2>Activity Log</h2>
-            <pre id="logBox"></pre>
-          </section>
+      <main>
+        <section class="hero panel">
+          <span class="hero-tag">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Multi-Chain Payout
+          </span>
+          <h1>
+            <svg class="ui-icon title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 12h10M12 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Batch Transfer
+          </h1>
+          <p>Upload a file and the system will auto-detect the chain type (Polygon / Solana / Tron). Connect your wallet to execute after confirmation.</p>
         </section>
 
-        <section id="workflowSection" class="right-column">
-          <section class="card">
-            <h2>Admin Console</h2>
-            <label>
-              Employee address
-              <input id="employeeAddressInput" placeholder="0x..." />
-            </label>
-            <label>
-              Monthly stipend (demo mode plain number)
-              <input
-                id="employeeStipendInput"
-                type="number"
-                min="0"
-                placeholder="1000"
-              />
-            </label>
-            <button id="configureEmployeeButton">Configure employee</button>
-
-            <div class="divider"></div>
-
-            <label>
-              Worker addresses (comma separated)
-              <textarea
-                id="workersInput"
-                rows="3"
-                placeholder="0xabc...,0xdef..."
-              ></textarea>
-            </label>
-            <button id="runPayrollButton">Run payroll cycle</button>
-          </section>
-
-          <section class="card">
-            <h2>Employee Claim</h2>
-            <label>
-              Demo claim amount
-              <input
-                id="claimAmountInput"
-                type="number"
-                min="0"
-                placeholder="100"
-              />
-            </label>
-            <button id="claimPlainButton">Claim (demo plain)</button>
-
-            <p class="hint">Production mode (FHE encrypted input)</p>
-            <label>
-              claimAmount handle (bytes32-like string)
-              <input id="claimHandleInput" placeholder="0x..." />
-            </label>
-            <label>
-              input proof (bytes)
-              <input id="claimProofInput" placeholder="0x..." />
-            </label>
-            <button id="claimEncryptedButton">Claim (encrypted)</button>
-          </section>
+        <section class="panel">
+            <div class="panel-head">
+              <h2>
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                Enter Addresses & Amounts
+              </h2>
+              <div class="panel-actions">
+                <button id="uploadBtn" class="top-upload" type="button">
+                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 16V6M12 6l-3 3M12 6l3 3M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Upload File
+                </button>
+                <input id="fileInput" class="hidden-file" type="file" accept=".csv,.txt" />
+                <a class="template-link" href="#" id="downloadTemplate">
+                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 4v10M12 14l-4-4M12 14l4-4M5 18h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Download Template
+                </a>
+              </div>
+            </div>
+            <p class="muted">3 rows by default. Add more or upload a file (top right) to auto-fill. File format: <code>address,amount</code></p>
+            <div id="entryRows" class="entry-rows"></div>
+            <button id="addRowBtn" class="add-row-btn" type="button">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Add Row
+            </button>
+            <p id="fileStatus" class="status">Please enter or upload data</p>
         </section>
-      </div>
-    </main>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 7h18M3 12h18M3 17h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Transfer List Preview
+            </h2>
+          </div>
+          <div class="stats">
+            <div class="stat-card">
+              <p>Total Entries</p>
+              <h3 id="totalRows">0</h3>
+            </div>
+            <div class="stat-card">
+              <p>Valid Entries</p>
+              <h3 id="validRows">0</h3>
+            </div>
+            <div class="stat-card">
+              <p>Total Amount</p>
+              <h3 id="totalAmount">0</h3>
+            </div>
+          </div>
+
+          <div class="chain-summary">
+            <span class="chip chip-evm" id="evmCount">EVM: 0</span>
+            <span class="chip chip-sol" id="solCount">Solana: 0</span>
+            <span class="chip chip-tron" id="tronCount">Tron: 0</span>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Wallet Address</th>
+                  <th>Chain</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="previewTable">
+                <tr>
+                  <td colspan="5" class="empty">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="6" width="18" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="16.5" cy="12" r="1.5" fill="currentColor"/>
+              </svg>
+              Connect Wallet & Execute
+            </h2>
+          </div>
+          <p class="muted" id="detectedHint">The system will auto-detect available chains based on addresses.</p>
+          <div id="networkChoices" class="network-choices"></div>
+          <p class="status" id="selectedChainLabel">No chain selected</p>
+
+          <button id="connectBtn" class="btn-primary" disabled>Connect Wallet</button>
+          <button id="batchTransferBtn" class="btn-secondary" disabled>Execute Batch Transfer</button>
+          <p id="actionStatus" class="status">Please upload a file first</p>
+        </section>
+      </main>
+    </div>
 
     <script type="module" src="./app.js"></script>
   </body>

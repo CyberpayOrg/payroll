@@ -1,149 +1,102 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nomad Pay Payout - Multi-Chain Batch Transfer</title>
+    <title>Nomad Pay Batch transfer</title>
     <link rel="icon" href="https://nomadpay.io/logo.svg" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
   </head>
   <body>
-    <div class="bg-orb orb-a"></div>
-    <div class="bg-orb orb-b"></div>
     <div id="app" class="page">
       <header class="header">
         <div class="brand">
-          <img src="https://nomadpay.io/logo.svg" alt="Nomad Pay Payout" class="brand-icon" width="28" height="28" />
+          <img src="https://nomadpay.io/logo.svg" alt="Nomad Pay Batch transfer" class="brand-icon" width="28" height="28" />
           <div>
-            <p class="brand-title">Nomad Pay Payout</p>
-            <p class="brand-sub">Batch Transfer Console</p>
+            <p class="brand-title">Nomad Pay Batch transfer</p>
+            <p class="brand-sub">One click USDT/USDC transfer to multiple addresses</p>
           </div>
         </div>
-        <div class="header-right">
-          <span id="walletState" class="wallet-state">Not Connected</span>
-        </div>
+        <span id="walletState" class="wallet-state">未连接</span>
       </header>
 
       <main>
-        <section class="hero panel">
-          <span class="hero-tag">
-            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Multi-Chain Payout
-          </span>
-          <h1>
-            <svg class="ui-icon title-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M7 12h10M12 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Batch Transfer
-          </h1>
-          <p>Upload a file and the system will auto-detect the chain type (Polygon / Solana / Tron). Connect your wallet to execute after confirmation.</p>
+        <section class="panel intro">
+          <h1>Batch USDT/USDC Transfer</h1>
+          <p>Supported Chains: Tron / Solana / EVM</p>
         </section>
 
         <section class="panel">
-            <div class="panel-head">
-              <h2>
-                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/>
-                  <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-                Enter Addresses & Amounts
-              </h2>
-              <div class="panel-actions">
-                <button id="uploadBtn" class="top-upload" type="button">
-                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 16V6M12 6l-3 3M12 6l3 3M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  Upload File
-                </button>
-                <input id="fileInput" class="hidden-file" type="file" accept=".csv,.txt" />
-                <a class="template-link" href="#" id="downloadTemplate">
-                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 4v10M12 14l-4-4M12 14l4-4M5 18h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  Download Template
-                </a>
-              </div>
-            </div>
-            <p class="muted">3 rows by default. Add more or upload a file (top right) to auto-fill. File format: <code>address,amount</code></p>
-            <div id="entryRows" class="entry-rows"></div>
-            <button id="addRowBtn" class="add-row-btn" type="button">
-              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              Add Row
-            </button>
-            <p id="fileStatus" class="status">Please enter or upload data</p>
+          <div class="line-actions">
+            <button id="uploadBtn" class="ghost-btn" type="button">上传文件</button>
+            <input id="fileInput" class="hidden-file" type="file" accept=".csv,.txt" />
+            <a class="template-link" href="#" id="downloadTemplate">下载模板</a>
+          </div>
+
+          <div class="entry-head">
+            <span>Recipient Address</span>
+            <span>Chain</span>
+            <span>Amount</span>
+            <span>Token</span>
+          </div>
+          <div id="entryRows" class="entry-rows"></div>
+
+          <div class="line-actions">
+            <button id="addRowBtn" class="ghost-btn" type="button">+ Add a line</button>
+          </div>
+          <p id="fileStatus" class="status">请先填写或上传名单</p>
+
+          <div class="confirm-wrap">
+            <button id="confirmBtn" class="confirm-btn" type="button">Confirm</button>
+          </div>
         </section>
 
         <section class="panel">
           <div class="panel-head">
-            <h2>
-              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M3 7h18M3 12h18M3 17h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-              Transfer List Preview
-            </h2>
+            <h2>第二段</h2>
           </div>
+
           <div class="stats">
             <div class="stat-card">
-              <p>Total Entries</p>
+              <p>总条目</p>
               <h3 id="totalRows">0</h3>
             </div>
             <div class="stat-card">
-              <p>Valid Entries</p>
+              <p>有效条目</p>
               <h3 id="validRows">0</h3>
             </div>
             <div class="stat-card">
-              <p>Total Amount</p>
+              <p>总金额</p>
               <h3 id="totalAmount">0</h3>
             </div>
           </div>
-
           <div class="chain-summary">
-            <span class="chip chip-evm" id="evmCount">EVM: 0</span>
-            <span class="chip chip-sol" id="solCount">Solana: 0</span>
-            <span class="chip chip-tron" id="tronCount">Tron: 0</span>
+            <span class="chip" id="evmCount">EVM: 0</span>
+            <span class="chip" id="solCount">Solana: 0</span>
+            <span class="chip" id="tronCount">Tron: 0</span>
           </div>
+
           <div class="table-wrap">
             <table class="table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Wallet Address</th>
+                  <th>Recipient</th>
                   <th>Chain</th>
                   <th>Amount</th>
-                  <th>Status</th>
+                  <th>Token</th>
                 </tr>
               </thead>
               <tbody id="previewTable">
                 <tr>
-                  <td colspan="5" class="empty">No data</td>
+                  <td colspan="4" class="empty">请先点击 Confirm</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <h2>
-              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="6" width="18" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/>
-                <circle cx="16.5" cy="12" r="1.5" fill="currentColor"/>
-              </svg>
-              Connect Wallet & Execute
-            </h2>
-          </div>
-          <p class="muted" id="detectedHint">The system will auto-detect available chains based on addresses.</p>
-          <div id="networkChoices" class="network-choices"></div>
-          <p class="status" id="selectedChainLabel">No chain selected</p>
-
-          <button id="connectBtn" class="btn-primary" disabled>Connect Wallet</button>
-          <button id="batchTransferBtn" class="btn-secondary" disabled>Execute Batch Transfer</button>
-          <p id="actionStatus" class="status">Please upload a file first</p>
+          <button id="connectSendBtn" class="send-btn" disabled>Connect wallet and send</button>
+          <p id="actionStatus" class="status">请先 Confirm 名单</p>
         </section>
       </main>
     </div>

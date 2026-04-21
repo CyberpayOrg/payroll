@@ -31,6 +31,13 @@
           <div class="line-actions">
             <button id="uploadBtn" class="ghost-btn" type="button">Upload File</button>
             <input id="fileInput" class="hidden-file" type="file" accept=".csv,.txt" />
+            <label class="top-token">
+              Token
+              <select id="tokenSelect">
+                <option value="USDT">USDT</option>
+                <option value="USDC">USDC</option>
+              </select>
+            </label>
             <a class="template-link" href="#" id="downloadTemplate">Download Template</a>
           </div>
 
@@ -38,7 +45,6 @@
             <span>Recipient Address</span>
             <span>Chain</span>
             <span>Amount</span>
-            <span>Token</span>
           </div>
           <div id="entryRows" class="entry-rows"></div>
 

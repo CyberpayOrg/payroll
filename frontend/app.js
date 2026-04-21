@@ -31,6 +31,7 @@ const DEFAULT_CONFIG = {
 const state = {
   entries: [],
   confirmedEntries: [],
+  selectedToken: "USDT",
   connectedAddress: "",
   connectedFamily: "",
   provider: null,
@@ -56,7 +57,7 @@ function normalizeEntries(entries) {
   return entries.map((row) => {
     const address = (row.address || "").trim();
     const amount = Number(row.amount);
-    const token = row.token || "USDT";
+    const token = state.selectedToken;
     const chain = detectChain(address);
     const valid = Boolean(address && Number.isFinite(amount) && amount > 0 && chain !== "Unknown");
     return { address, amount: Number.isFinite(amount) ? amount : 0, chain, token, valid };
@@ -65,7 +66,7 @@ function normalizeEntries(entries) {
 
 function addEmptyRows(count = 1) {
   for (let i = 0; i < count; i += 1) {
-    state.entries.push({ address: "", amount: "", token: "USDT", chain: "Unknown", valid: false });
+    state.entries.push({ address: "", amount: "", token: state.selectedToken, chain: "Unknown", valid: false });
   }
 }
 
@@ -83,8 +84,8 @@ function setStatus(id, text, type = "") {
 function parseUploadText(raw) {
   const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   return lines.map((line) => {
-    const [address = "", amount = "", token = "USDT"] = line.replace(/\s+/g, "").split(",");
-    return { address, amount, token: token.toUpperCase() === "USDC" ? "USDC" : "USDT" };
+    const [address = "", amount = ""] = line.replace(/\s+/g, "").split(",");
+    return { address, amount, token: state.selectedToken };
   });
 }
 
@@ -124,10 +125,6 @@ function renderRows() {
       <input data-kind="address" data-index="${index}" value="${row.address}" placeholder="wallet address" spellcheck="false" />
       <span class="readonly-cell">${row.chain}</span>
       <input data-kind="amount" data-index="${index}" value="${row.amount || ""}" placeholder="amount" />
-      <select data-kind="token" data-index="${index}">
-        <option value="USDT" ${row.token === "USDT" ? "selected" : ""}>USDT</option>
-        <option value="USDC" ${row.token === "USDC" ? "selected" : ""}>USDC</option>
-      </select>
     `;
     wrap.appendChild(line);
   });
@@ -422,6 +419,15 @@ function bindEvents() {
     downloadTemplate();
   });
 
+  $("tokenSelect").addEventListener("change", (event) => {
+    const value = event.target.value === "USDC" ? "USDC" : "USDT";
+    state.selectedToken = value;
+    state.entries = state.entries.map((row) => ({ ...row, token: value }));
+    renderRows();
+    markDirty();
+    setStatus("fileStatus", `Token switched to ${value}, please confirm again`);
+  });
+
   $("addRowBtn").addEventListener("click", () => {
     addEmptyRows(1);
     renderRows();
@@ -436,7 +442,6 @@ function bindEvents() {
     if (!Number.isInteger(index) || index < 0 || index >= state.entries.length) return;
     if (kind === "address") state.entries[index].address = target.value;
     if (kind === "amount") state.entries[index].amount = target.value;
-    if (kind === "token") state.entries[index].token = target.value;
     state.entries = normalizeEntries(state.entries);
     renderRows();
     markDirty();
@@ -457,6 +462,7 @@ function bindEvents() {
 async function init() {
   addEmptyRows(3);
   await loadRuntimeConfig();
+  $("tokenSelect").value = state.selectedToken;
   setSecondStageVisible(false);
   renderRows();
   renderPreview();

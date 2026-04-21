@@ -100,7 +100,7 @@ main {
 .line-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -117,13 +117,31 @@ main {
   cursor: pointer;
 }
 
+.top-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.top-token select {
+  border: 1px solid #d5dbe6;
+  background: #fff;
+  color: #1d232f;
+  border-radius: 9px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+
 .hidden-file {
   display: none;
 }
 
 .entry-head {
   display: grid;
-  grid-template-columns: 2.2fr 0.9fr 1fr 0.9fr;
+  grid-template-columns: 2.4fr 1fr 1fr;
   gap: 8px;
   margin-bottom: 6px;
   color: var(--muted);
@@ -137,7 +155,7 @@ main {
 
 .entry-row {
   display: grid;
-  grid-template-columns: 2.2fr 0.9fr 1fr 0.9fr;
+  grid-template-columns: 2.4fr 1fr 1fr;
   gap: 8px;
 }
 

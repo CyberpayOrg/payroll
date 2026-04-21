@@ -1,4 +1,37 @@
 {
   "address": "0x011Ecb8CFbb7b6fF5a182e7db06b497513d13e0c",
-  "chainId": 11155111
+  "chainId": 11155111,
+  "evm": {
+    "chainId": 11155111,
+    "tokens": {
+      "USDT": "",
+      "USDC": ""
+    },
+    "decimals": {
+      "USDT": 6,
+      "USDC": 6
+    }
+  },
+  "solana": {
+    "rpc": "https://api.devnet.solana.com",
+    "tokens": {
+      "USDT": "H8UekPGwePSmQ3ttuYGPU1szyFfjZR4N53rymSFwpLPm",
+      "USDC": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+    },
+    "decimals": {
+      "USDT": 6,
+      "USDC": 6
+    }
+  },
+  "tron": {
+    "fullHost": "https://nile.trongrid.io",
+    "tokens": {
+      "USDT": "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf",
+      "USDC": "TEMVynQpntMqkPxP6wXTW2K7e4sM3cRmWz"
+    },
+    "decimals": {
+      "USDT": 6,
+      "USDC": 6
+    }
+  }
 }

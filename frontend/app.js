@@ -1,8 +1,32 @@
-const BATCH_DISPERSE_ABI = [
-  "function disperseNative(address[] recipients, uint256[] values) payable",
+const ERC20_ABI = [
+  "function transfer(address to, uint256 value) returns (bool)",
 ];
 
 const $ = (id) => document.getElementById(id);
+
+const DEFAULT_CONFIG = {
+  evm: {
+    chainId: 11155111,
+    tokens: { USDT: "", USDC: "" },
+    decimals: { USDT: 6, USDC: 6 },
+  },
+  solana: {
+    rpc: "https://api.devnet.solana.com",
+    tokens: {
+      USDT: "H8UekPGwePSmQ3ttuYGPU1szyFfjZR4N53rymSFwpLPm",
+      USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+    },
+    decimals: { USDT: 6, USDC: 6 },
+  },
+  tron: {
+    fullHost: "https://nile.trongrid.io",
+    tokens: {
+      USDT: "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf",
+      USDC: "TEMVynQpntMqkPxP6wXTW2K7e4sM3cRmWz",
+    },
+    decimals: { USDT: 6, USDC: 6 },
+  },
+};
 
 const state = {
   entries: [],
@@ -11,8 +35,10 @@ const state = {
   connectedFamily: "",
   provider: null,
   signer: null,
-  evmContractAddress: "",
-  evmPreferredChainId: "",
+  config: structuredClone(DEFAULT_CONFIG),
+  solanaWallet: null,
+  solanaDeps: null,
+  tronWeb: null,
 };
 
 function shortAddr(addr) {
@@ -49,6 +75,7 @@ function ensureMinimumRows() {
 
 function setStatus(id, text, type = "") {
   const el = $(id);
+  if (!el) return;
   el.textContent = text;
   el.className = `status ${type}`.trim();
 }
@@ -61,13 +88,26 @@ function parseUploadText(raw) {
   });
 }
 
+function mergeConfig(target, source) {
+  if (!source || typeof source !== "object") return target;
+  const out = { ...target };
+  for (const key of Object.keys(source)) {
+    const value = source[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      out[key] = mergeConfig(target[key] || {}, value);
+    } else if (value !== undefined && value !== null) {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
 async function loadRuntimeConfig() {
   try {
     const response = await fetch("./deployment.json", { cache: "no-store" });
     if (!response.ok) return;
     const data = await response.json();
-    if (data?.address && ethers.isAddress(data.address)) state.evmContractAddress = data.address;
-    if (data?.chainId) state.evmPreferredChainId = String(data.chainId);
+    state.config = mergeConfig(DEFAULT_CONFIG, data);
   } catch (_) {}
 }
 
@@ -126,14 +166,23 @@ function renderPreview() {
   `).join("");
 }
 
+function setSecondStageVisible(visible) {
+  const stage = $("secondStage");
+  if (!stage) return;
+  stage.style.display = visible ? "block" : "none";
+}
+
 function markDirty() {
   state.confirmedEntries = [];
   state.connectedAddress = "";
   state.connectedFamily = "";
   state.provider = null;
   state.signer = null;
+  state.solanaWallet = null;
+  state.tronWeb = null;
   $("walletState").textContent = "未连接";
   $("connectSendBtn").disabled = true;
+  setSecondStageVisible(false);
   renderPreview();
   renderSummary(normalizeEntries(state.entries).filter((row) => row.valid));
   setStatus("actionStatus", "名单已变更，请先 Confirm", "warn");
@@ -148,6 +197,7 @@ function confirmList() {
   }
 
   state.confirmedEntries = valid.map((row) => ({ ...row }));
+  setSecondStageVisible(true);
   renderPreview();
   renderSummary(state.confirmedEntries);
   $("connectSendBtn").disabled = false;
@@ -158,32 +208,45 @@ function confirmList() {
 async function connectEvmWallet() {
   if (!window.ethereum) throw new Error("未检测到 EVM 钱包");
   await window.ethereum.request({ method: "eth_requestAccounts" });
-  if (state.evmPreferredChainId) {
+
+  const chainId = state.config.evm?.chainId;
+  if (chainId) {
     try {
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: `0x${Number(state.evmPreferredChainId).toString(16)}` }],
+        params: [{ chainId: `0x${Number(chainId).toString(16)}` }],
       });
     } catch (_) {}
   }
+
   state.provider = new ethers.BrowserProvider(window.ethereum);
   state.signer = await state.provider.getSigner();
   state.connectedAddress = await state.signer.getAddress();
   state.connectedFamily = "EVM";
 }
 
+async function ensureSolanaDeps() {
+  if (state.solanaDeps) return state.solanaDeps;
+  const web3 = await import("https://esm.sh/@solana/web3.js@1.95.3");
+  const spl = await import("https://esm.sh/@solana/spl-token@0.4.9");
+  state.solanaDeps = { web3, spl };
+  return state.solanaDeps;
+}
+
 async function connectSolanaWallet() {
   if (!window.solana?.connect) throw new Error("未检测到 Solana 钱包");
   const wallet = await window.solana.connect();
+  state.solanaWallet = window.solana;
   state.connectedAddress = wallet.publicKey.toString();
   state.connectedFamily = "Solana";
 }
 
 async function connectTronWallet() {
-  if (!window.tronLink?.request) throw new Error("未检测到 Tron 钱包");
+  if (!window.tronLink?.request) throw new Error("未检测到 TronLink 钱包");
   await window.tronLink.request({ method: "tron_requestAccounts" });
-  state.connectedAddress = window.tronWeb?.defaultAddress?.base58 || "";
-  if (!state.connectedAddress) throw new Error("Tron 钱包连接失败");
+  if (!window.tronWeb?.defaultAddress?.base58) throw new Error("Tron 钱包连接失败");
+  state.tronWeb = window.tronWeb;
+  state.connectedAddress = window.tronWeb.defaultAddress.base58;
   state.connectedFamily = "Tron";
 }
 
@@ -195,18 +258,102 @@ async function ensureWalletForFamily(family) {
   $("walletState").textContent = `已连接 ${shortAddr(state.connectedAddress)}`;
 }
 
-async function sendEvmBatch(rows) {
+function getTokenConfig(family, token) {
+  const section = family === "EVM" ? state.config.evm : family === "Solana" ? state.config.solana : state.config.tron;
+  const tokenAddress = section?.tokens?.[token];
+  const decimals = Number(section?.decimals?.[token] ?? 6);
+  return { tokenAddress, decimals };
+}
+
+async function sendEvmRows(rows) {
   if (!state.signer) throw new Error("EVM 钱包未连接");
-  if (!ethers.isAddress(state.evmContractAddress)) {
-    throw new Error("deployment.json 未配置 EVM 合约地址");
+  for (const row of rows) {
+    const { tokenAddress, decimals } = getTokenConfig("EVM", row.token);
+    if (!tokenAddress || !ethers.isAddress(tokenAddress)) {
+      throw new Error(`EVM ${row.token} 合约地址未配置`);
+    }
+    const contract = new ethers.Contract(tokenAddress, ERC20_ABI, state.signer);
+    const amount = ethers.parseUnits(String(row.amount), decimals);
+    const tx = await contract.transfer(row.address, amount);
+    setStatus("actionStatus", `EVM ${row.token} 已提交: ${tx.hash.slice(0, 10)}...`, "ok");
+    await tx.wait();
   }
-  const recipients = rows.map((row) => row.address);
-  const values = rows.map((row) => ethers.parseUnits(String(row.amount), 6));
-  const totalValue = values.reduce((sum, item) => sum + item, 0n);
-  const contract = new ethers.Contract(state.evmContractAddress, BATCH_DISPERSE_ABI, state.signer);
-  const tx = await contract.disperseNative(recipients, values, { value: totalValue });
-  setStatus("actionStatus", `交易已提交: ${tx.hash.slice(0, 10)}...`, "ok");
-  await tx.wait();
+}
+
+async function sendSolanaRows(rows) {
+  if (!state.solanaWallet?.publicKey) throw new Error("Solana 钱包未连接");
+  const { web3, spl } = await ensureSolanaDeps();
+  const connection = new web3.Connection(state.config.solana.rpc || "https://api.devnet.solana.com", "confirmed");
+  const sender = state.solanaWallet.publicKey;
+
+  for (const row of rows) {
+    const { tokenAddress, decimals } = getTokenConfig("Solana", row.token);
+    if (!tokenAddress) throw new Error(`Solana ${row.token} mint 未配置`);
+
+    const mint = new web3.PublicKey(tokenAddress);
+    const recipient = new web3.PublicKey(row.address);
+    const fromAta = await spl.getAssociatedTokenAddress(mint, sender);
+    const toAta = await spl.getAssociatedTokenAddress(mint, recipient);
+
+    const tx = new web3.Transaction();
+    const toAtaInfo = await connection.getAccountInfo(toAta);
+    if (!toAtaInfo) {
+      tx.add(
+        spl.createAssociatedTokenAccountInstruction(
+          sender,
+          toAta,
+          recipient,
+          mint,
+        ),
+      );
+    }
+
+    const base = 10 ** decimals;
+    const amount = BigInt(Math.round(row.amount * base));
+    tx.add(
+      spl.createTransferCheckedInstruction(
+        fromAta,
+        mint,
+        toAta,
+        sender,
+        amount,
+        decimals,
+      ),
+    );
+
+    tx.feePayer = sender;
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+
+    let signature = "";
+    if (state.solanaWallet.signAndSendTransaction) {
+      const result = await state.solanaWallet.signAndSendTransaction(tx);
+      signature = typeof result === "string" ? result : result.signature;
+    } else if (state.solanaWallet.signTransaction) {
+      const signed = await state.solanaWallet.signTransaction(tx);
+      signature = await connection.sendRawTransaction(signed.serialize());
+    } else {
+      throw new Error("当前 Solana 钱包不支持签名发送");
+    }
+    await connection.confirmTransaction(signature, "confirmed");
+    setStatus("actionStatus", `Solana ${row.token} 已发送: ${signature.slice(0, 10)}...`, "ok");
+  }
+}
+
+async function sendTronRows(rows) {
+  const tronWeb = state.tronWeb || window.tronWeb;
+  if (!tronWeb) throw new Error("Tron 钱包未连接");
+
+  for (const row of rows) {
+    const { tokenAddress, decimals } = getTokenConfig("Tron", row.token);
+    if (!tokenAddress) throw new Error(`Tron ${row.token} 合约地址未配置`);
+    const contract = await tronWeb.contract().at(tokenAddress);
+    const amount = Math.round(row.amount * (10 ** decimals));
+    const txid = await contract.transfer(row.address, amount).send({
+      feeLimit: 100_000_000,
+      shouldPollResponse: true,
+    });
+    setStatus("actionStatus", `Tron ${row.token} 已发送: ${String(txid).slice(0, 10)}...`, "ok");
+  }
 }
 
 async function connectAndSend() {
@@ -215,30 +362,31 @@ async function connectAndSend() {
     return;
   }
 
-  const families = [...new Set(state.confirmedEntries.map((row) => row.chain))];
-  if (families.length !== 1) {
-    setStatus("actionStatus", "当前版本一次仅支持单链发送，请按链分批 Confirm", "warn");
+  const families = [...new Set(state.confirmedEntries.map((row) => row.chain))]
+    .filter((family) => ["EVM", "Solana", "Tron"].includes(family));
+
+  if (!families.length) {
+    setStatus("actionStatus", "没有可执行链", "warn");
     return;
   }
 
-  const family = families[0];
-  setStatus("actionStatus", "正在连接钱包...", "");
-  await ensureWalletForFamily(family);
-
-  if (family === "EVM") {
-    await sendEvmBatch(state.confirmedEntries);
-    setStatus("actionStatus", "发送完成", "ok");
-    return;
+  for (const family of families) {
+    const rows = state.confirmedEntries.filter((row) => row.chain === family);
+    setStatus("actionStatus", `正在处理 ${family}（${rows.length} 条）...`);
+    await ensureWalletForFamily(family);
+    if (family === "EVM") await sendEvmRows(rows);
+    else if (family === "Solana") await sendSolanaRows(rows);
+    else await sendTronRows(rows);
   }
 
-  setStatus("actionStatus", `${family} 发送已预留入口，待接入该链合约`, "warn");
+  setStatus("actionStatus", "全部链发送完成", "ok");
 }
 
 function downloadTemplate() {
   const sample = [
     "0x1111111111111111111111111111111111111111,0.10,USDT",
-    "0x2222222222222222222222222222222222222222,0.25,USDT",
-    "0x3333333333333333333333333333333333333333,0.50,USDC",
+    "0x2222222222222222222222222222222222222222,0.25,USDC",
+    "0x3333333333333333333333333333333333333333,0.50,USDT",
     "7xKXtg2CWG1WwQpP8iJ6X5tLVJdz6gr7VQZdb7jCzJj4,1.2,USDT",
     "6QWeT6FpJrm8AF1bP6f8mQYe8A9A4zXw2J7Y9m2LQ3sR,2.6,USDC",
     "9hJxN4vL2F7qBb8WQm5oPs3Rk6TzYc1Ud8eG2nV5aKpM,3.1,USDT",
@@ -292,7 +440,7 @@ function bindEvents() {
     state.entries = normalizeEntries(state.entries);
     renderRows();
     markDirty();
-    setStatus("fileStatus", "已手动编辑，请点击 Confirm", "");
+    setStatus("fileStatus", "已手动编辑，请点击 Confirm");
   });
 
   $("confirmBtn").addEventListener("click", confirmList);
@@ -309,6 +457,7 @@ function bindEvents() {
 async function init() {
   addEmptyRows(3);
   await loadRuntimeConfig();
+  setSecondStageVisible(false);
   renderRows();
   renderPreview();
   renderSummary([]);

@@ -152,7 +152,7 @@ function renderSummary(entries) {
 function renderPreview() {
   const tbody = $("previewTable");
   if (!state.confirmedEntries.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">请先点击 Confirm</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">Click Confirm first</td></tr>';
     return;
   }
 
@@ -180,19 +180,19 @@ function markDirty() {
   state.signer = null;
   state.solanaWallet = null;
   state.tronWeb = null;
-  $("walletState").textContent = "未连接";
+  $("walletState").textContent = "Not Connected";
   $("connectSendBtn").disabled = true;
   setSecondStageVisible(false);
   renderPreview();
   renderSummary(normalizeEntries(state.entries).filter((row) => row.valid));
-  setStatus("actionStatus", "名单已变更，请先 Confirm", "warn");
+  setStatus("actionStatus", "List changed, please confirm again", "warn");
 }
 
 function confirmList() {
   state.entries = normalizeEntries(state.entries);
   const valid = state.entries.filter((row) => row.valid);
   if (!valid.length) {
-    setStatus("fileStatus", "没有可确认的有效条目", "warn");
+    setStatus("fileStatus", "No valid rows to confirm", "warn");
     return;
   }
 
@@ -201,12 +201,12 @@ function confirmList() {
   renderPreview();
   renderSummary(state.confirmedEntries);
   $("connectSendBtn").disabled = false;
-  setStatus("fileStatus", `已确认 ${state.confirmedEntries.length} 条`, "ok");
-  setStatus("actionStatus", "可连接钱包并发送", "ok");
+  setStatus("fileStatus", `Confirmed ${state.confirmedEntries.length} rows`, "ok");
+  setStatus("actionStatus", "Ready to connect wallet and send", "ok");
 }
 
 async function connectEvmWallet() {
-  if (!window.ethereum) throw new Error("未检测到 EVM 钱包");
+  if (!window.ethereum) throw new Error("EVM wallet not detected");
   await window.ethereum.request({ method: "eth_requestAccounts" });
 
   const chainId = state.config.evm?.chainId;
@@ -234,7 +234,7 @@ async function ensureSolanaDeps() {
 }
 
 async function connectSolanaWallet() {
-  if (!window.solana?.connect) throw new Error("未检测到 Solana 钱包");
+  if (!window.solana?.connect) throw new Error("Solana wallet not detected");
   const wallet = await window.solana.connect();
   state.solanaWallet = window.solana;
   state.connectedAddress = wallet.publicKey.toString();
@@ -242,9 +242,9 @@ async function connectSolanaWallet() {
 }
 
 async function connectTronWallet() {
-  if (!window.tronLink?.request) throw new Error("未检测到 TronLink 钱包");
+  if (!window.tronLink?.request) throw new Error("TronLink wallet not detected");
   await window.tronLink.request({ method: "tron_requestAccounts" });
-  if (!window.tronWeb?.defaultAddress?.base58) throw new Error("Tron 钱包连接失败");
+  if (!window.tronWeb?.defaultAddress?.base58) throw new Error("Failed to connect Tron wallet");
   state.tronWeb = window.tronWeb;
   state.connectedAddress = window.tronWeb.defaultAddress.base58;
   state.connectedFamily = "Tron";
@@ -255,7 +255,7 @@ async function ensureWalletForFamily(family) {
   if (family === "EVM") await connectEvmWallet();
   else if (family === "Solana") await connectSolanaWallet();
   else await connectTronWallet();
-  $("walletState").textContent = `已连接 ${shortAddr(state.connectedAddress)}`;
+  $("walletState").textContent = `Connected ${shortAddr(state.connectedAddress)}`;
 }
 
 function getTokenConfig(family, token) {
@@ -266,29 +266,29 @@ function getTokenConfig(family, token) {
 }
 
 async function sendEvmRows(rows) {
-  if (!state.signer) throw new Error("EVM 钱包未连接");
+  if (!state.signer) throw new Error("EVM wallet not connected");
   for (const row of rows) {
     const { tokenAddress, decimals } = getTokenConfig("EVM", row.token);
     if (!tokenAddress || !ethers.isAddress(tokenAddress)) {
-      throw new Error(`EVM ${row.token} 合约地址未配置`);
+      throw new Error(`EVM ${row.token} token address is not configured`);
     }
     const contract = new ethers.Contract(tokenAddress, ERC20_ABI, state.signer);
     const amount = ethers.parseUnits(String(row.amount), decimals);
     const tx = await contract.transfer(row.address, amount);
-    setStatus("actionStatus", `EVM ${row.token} 已提交: ${tx.hash.slice(0, 10)}...`, "ok");
+    setStatus("actionStatus", `EVM ${row.token} submitted: ${tx.hash.slice(0, 10)}...`, "ok");
     await tx.wait();
   }
 }
 
 async function sendSolanaRows(rows) {
-  if (!state.solanaWallet?.publicKey) throw new Error("Solana 钱包未连接");
+  if (!state.solanaWallet?.publicKey) throw new Error("Solana wallet not connected");
   const { web3, spl } = await ensureSolanaDeps();
   const connection = new web3.Connection(state.config.solana.rpc || "https://api.devnet.solana.com", "confirmed");
   const sender = state.solanaWallet.publicKey;
 
   for (const row of rows) {
     const { tokenAddress, decimals } = getTokenConfig("Solana", row.token);
-    if (!tokenAddress) throw new Error(`Solana ${row.token} mint 未配置`);
+    if (!tokenAddress) throw new Error(`Solana ${row.token} mint is not configured`);
 
     const mint = new web3.PublicKey(tokenAddress);
     const recipient = new web3.PublicKey(row.address);
@@ -332,33 +332,33 @@ async function sendSolanaRows(rows) {
       const signed = await state.solanaWallet.signTransaction(tx);
       signature = await connection.sendRawTransaction(signed.serialize());
     } else {
-      throw new Error("当前 Solana 钱包不支持签名发送");
+      throw new Error("Current Solana wallet does not support sign+send");
     }
     await connection.confirmTransaction(signature, "confirmed");
-    setStatus("actionStatus", `Solana ${row.token} 已发送: ${signature.slice(0, 10)}...`, "ok");
+    setStatus("actionStatus", `Solana ${row.token} sent: ${signature.slice(0, 10)}...`, "ok");
   }
 }
 
 async function sendTronRows(rows) {
   const tronWeb = state.tronWeb || window.tronWeb;
-  if (!tronWeb) throw new Error("Tron 钱包未连接");
+  if (!tronWeb) throw new Error("Tron wallet not connected");
 
   for (const row of rows) {
     const { tokenAddress, decimals } = getTokenConfig("Tron", row.token);
-    if (!tokenAddress) throw new Error(`Tron ${row.token} 合约地址未配置`);
+    if (!tokenAddress) throw new Error(`Tron ${row.token} token address is not configured`);
     const contract = await tronWeb.contract().at(tokenAddress);
     const amount = Math.round(row.amount * (10 ** decimals));
     const txid = await contract.transfer(row.address, amount).send({
       feeLimit: 100_000_000,
       shouldPollResponse: true,
     });
-    setStatus("actionStatus", `Tron ${row.token} 已发送: ${String(txid).slice(0, 10)}...`, "ok");
+    setStatus("actionStatus", `Tron ${row.token} sent: ${String(txid).slice(0, 10)}...`, "ok");
   }
 }
 
 async function connectAndSend() {
   if (!state.confirmedEntries.length) {
-    setStatus("actionStatus", "请先 Confirm 名单", "warn");
+    setStatus("actionStatus", "Please confirm the list first", "warn");
     return;
   }
 
@@ -366,20 +366,20 @@ async function connectAndSend() {
     .filter((family) => ["EVM", "Solana", "Tron"].includes(family));
 
   if (!families.length) {
-    setStatus("actionStatus", "没有可执行链", "warn");
+    setStatus("actionStatus", "No executable chain detected", "warn");
     return;
   }
 
   for (const family of families) {
     const rows = state.confirmedEntries.filter((row) => row.chain === family);
-    setStatus("actionStatus", `正在处理 ${family}（${rows.length} 条）...`);
+    setStatus("actionStatus", `Processing ${family} (${rows.length} rows)...`);
     await ensureWalletForFamily(family);
     if (family === "EVM") await sendEvmRows(rows);
     else if (family === "Solana") await sendSolanaRows(rows);
     else await sendTronRows(rows);
   }
 
-  setStatus("actionStatus", "全部链发送完成", "ok");
+  setStatus("actionStatus", "All chain batches completed", "ok");
 }
 
 function downloadTemplate() {
@@ -414,7 +414,7 @@ function bindEvents() {
     ensureMinimumRows();
     renderRows();
     markDirty();
-    setStatus("fileStatus", "文件已载入，请检查后 Confirm", "ok");
+    setStatus("fileStatus", "File loaded, review and click Confirm", "ok");
   });
 
   $("downloadTemplate").addEventListener("click", (event) => {
@@ -440,7 +440,7 @@ function bindEvents() {
     state.entries = normalizeEntries(state.entries);
     renderRows();
     markDirty();
-    setStatus("fileStatus", "已手动编辑，请点击 Confirm");
+    setStatus("fileStatus", "List edited manually, please click Confirm");
   });
 
   $("confirmBtn").addEventListener("click", confirmList);
@@ -449,7 +449,7 @@ function bindEvents() {
     try {
       await connectAndSend();
     } catch (error) {
-      setStatus("actionStatus", error.message || "执行失败", "warn");
+      setStatus("actionStatus", error.message || "Execution failed", "warn");
     }
   });
 }

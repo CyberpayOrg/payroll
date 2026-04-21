@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +18,7 @@
             <p class="brand-sub">One click USDT/USDC transfer to multiple addresses</p>
           </div>
         </div>
-        <span id="walletState" class="wallet-state">未连接</span>
+        <span id="walletState" class="wallet-state">Not Connected</span>
       </header>
 
       <main>
@@ -29,9 +29,9 @@
 
         <section class="panel">
           <div class="line-actions">
-            <button id="uploadBtn" class="ghost-btn" type="button">上传文件</button>
+            <button id="uploadBtn" class="ghost-btn" type="button">Upload File</button>
             <input id="fileInput" class="hidden-file" type="file" accept=".csv,.txt" />
-            <a class="template-link" href="#" id="downloadTemplate">下载模板</a>
+            <a class="template-link" href="#" id="downloadTemplate">Download Template</a>
           </div>
 
           <div class="entry-head">
@@ -45,7 +45,7 @@
           <div class="line-actions">
             <button id="addRowBtn" class="ghost-btn" type="button">+ Add a line</button>
           </div>
-          <p id="fileStatus" class="status">请先填写或上传名单</p>
+          <p id="fileStatus" class="status">Please enter or upload list data</p>
 
           <div class="confirm-wrap">
             <button id="confirmBtn" class="confirm-btn" type="button">Confirm</button>
@@ -54,20 +54,20 @@
 
         <section id="secondStage" class="panel hidden-stage">
           <div class="panel-head">
-            <h2>第二段</h2>
+            <h2>Stage Two</h2>
           </div>
 
           <div class="stats">
             <div class="stat-card">
-              <p>总条目</p>
+              <p>Total Entries</p>
               <h3 id="totalRows">0</h3>
             </div>
             <div class="stat-card">
-              <p>有效条目</p>
+              <p>Valid Entries</p>
               <h3 id="validRows">0</h3>
             </div>
             <div class="stat-card">
-              <p>总金额</p>
+              <p>Total Amount</p>
               <h3 id="totalAmount">0</h3>
             </div>
           </div>
@@ -89,14 +89,14 @@
               </thead>
               <tbody id="previewTable">
                 <tr>
-                  <td colspan="4" class="empty">请先点击 Confirm</td>
+                  <td colspan="4" class="empty">Click Confirm first</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <button id="connectSendBtn" class="send-btn" disabled>Connect wallet and send</button>
-          <p id="actionStatus" class="status">请先 Confirm 名单</p>
+          <p id="actionStatus" class="status">Please confirm the list first</p>
         </section>
       </main>
     </div>
